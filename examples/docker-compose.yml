@@ -1,0 +1,10 @@
+services:
+  phoenixd:
+    image: ghcr.io/sethforprivacy/phoenixd:latest
+    container_name: phoenixd
+    volumes:
+      - phoenixd-data:/root/.phoenix
+    command: --agree-to-terms-of-service
+
+volumes:
+  phoenixd-data:

@@ -90,7 +90,10 @@ RUN wget https://curl.se/download/curl-${CURL_VERSION}.tar.bz2 \
 ARG GROUP_ID=1000
 ARG USER_ID=1000
 RUN groupadd -g ${GROUP_ID} phoenix \
-    && useradd -u ${USER_ID} -g phoenix -d /phoenix phoenix
+    && useradd -u ${USER_ID} -g phoenix -d /phoenix phoenix \
+    && mkdir -p /phoenix/.phoenix \
+    && chown -R phoenix:phoenix /phoenix
+USER phoenix:phoenix
 
 # Switch to home directory and install newly built phoenixd binary
 WORKDIR /phoenix

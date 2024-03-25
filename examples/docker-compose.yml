@@ -1,8 +1,8 @@
 services:
   phoenixd:
-    image: ghcr.io/sethforprivacy/phoenixd:latest
+    build: ..
+    image: phoenixd:latest
     container_name: phoenixd
-    user: "${UID}:${GID}"    
     volumes:
       - phoenixd-data:/phoenix/.phoenix
     command: --agree-to-terms-of-service

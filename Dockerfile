@@ -1,5 +1,11 @@
+# Much credit for the base of this image goes to @pm47: 
+# https://github.com/ACINQ/phoenixd/issues/1#issuecomment-2016584446
+
+# Create builder image using Ubuntu 18.04
+# Ubuntu 18.04 is a necessarily older version of Ubuntu to support the build process for phoenixd and its dependencies
 FROM ubuntu:18.04 as builder
 
+# Pin phoenixd, lightning-kmp, and libcurl versions
 ARG PHOENIXD_BRANCH=v0.1.1
 ARG PHOENIXD_COMMIT_HASH=4e42a462e6cc7d0a09fb224820071991ac1a0eca
 ARG LIGHTNING_KMP_BRANCH=v1.6.2-FEECREDIT-4
@@ -51,6 +57,7 @@ RUN git clone --recursive --branch ${PHOENIXD_BRANCH} \
 
 # Begin final image build
 # Select Ubuntu 18.04 for the base image
+# Ubuntu 18.04 is a necessarily older version of Ubuntu to support the build process for phoenixd and its dependencies
 FROM ubuntu:18.04 as final
 
 ARG CURL_VERSION=7.88.1
@@ -86,7 +93,7 @@ RUN groupadd -g ${GROUP_ID} phoenix \
     && useradd -u ${USER_ID} -g phoenix -d /phoenix phoenix
 
 # Switch to home directory and install newly built phoenixd binary
-WORKDIR /home/phoenix
+WORKDIR /phoenix
 COPY --chown=phoenix:phoenix --from=builder /phoenixd/build/bin/linuxX64/phoenixdReleaseExecutable/phoenixd.kexe /usr/local/bin/phoenixd
 
 # Indicate that the container listens on port 9740

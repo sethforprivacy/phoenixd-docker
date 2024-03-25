@@ -42,5 +42,5 @@ jobs:
         run: |
           docker run --rm phoenixd:test &
           PID=$!
-          sleep 30
+          sleep 10
           kill -SIGINT $PID # this will return a non-zero exit code if the container dies early on

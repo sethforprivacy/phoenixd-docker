@@ -86,11 +86,27 @@ RUN wget https://curl.se/download/curl-${CURL_VERSION}.tar.bz2 \
     && DEBIAN_FRONTEND=noninteractive apt purge -y build-essential wget \
     && apt autoremove -y
 
+# Copy and enable entrypoint script
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
+
 # Set phoenix user and group with static IDs
 ARG GROUP_ID=1000
 ARG USER_ID=1000
 RUN groupadd -g ${GROUP_ID} phoenix \
     && useradd -u ${USER_ID} -g phoenix -d /phoenix phoenix
+
+# Install and configure fixuid and switch to PHOENIX_USER
+ARG PHOENIX_USER="phoenix"
+ARG TARGETARCH
+ARG FIXUID_VERSION="0.6.0"
+RUN curl -SsL https://github.com/boxboat/fixuid/releases/download/v${FIXUID_VERSION}/fixuid-${FIXUID_VERSION}-linux-amd64.tar.gz | tar -C /usr/local/bin -xzf - && \
+    chown root:root /usr/local/bin/fixuid && \
+    chmod 4755 /usr/local/bin/fixuid && \
+    mkdir -p /etc/fixuid && \
+    printf "user: ${PHOENIX_USER}\ngroup: ${PHOENIX_USER}\n" > /etc/fixuid/config.yml
+USER "${PHOENIX_USER}:${PHOENIX_USER}"
 
 # Switch to home directory and install newly built phoenixd binary
 WORKDIR /phoenix
@@ -102,5 +118,5 @@ EXPOSE 9740
 # Expose default phoenixd storage location
 VOLUME ["/phoenix/.phoenix"]
 
-# Run the daemon
-ENTRYPOINT ["phoenixd", "--http-bind-ip", "0.0.0.0"]
+# Start monerod with sane defaults that are overridden by user input (if applicable)
+CMD ["--agree-to-terms-of-service"]

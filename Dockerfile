@@ -10,7 +10,7 @@ ARG PHOENIXD_COMMIT_HASH=d805f81c2bfb8a09a726bb36278216e607100a16
 RUN apt-get update \
     && apt-get upgrade -y
 RUN apt-get install -y --no-install-recommends bash git \
-    && apt clean
+    && apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Git pull phoenixd source at specified tag/branch and compile phoenixd
 WORKDIR /phoenixd
@@ -25,16 +25,16 @@ FROM eclipse-temurin:21-jre-alpine
 # Upgrade all packages and install dependencies
 RUN apk update \
     && apk upgrade --no-interactive
-RUN apk add --no-cache bash
+RUN apk add --update --no-cache bash
 
 # Create a phoenix group and user
 RUN addgroup -S phoenix -g 1000 \
     && adduser -S phoenix -G phoenix -u 1000 -h /phoenix
-USER phoenix
+USER phoenix:phoenix
 
 # Unpack the release
 WORKDIR /phoenix
-COPY --chown=phoenix --from=BUILD /phoenixd/build/distributions/phoenix-*-jvm.tar .
+COPY --chown=phoenix:phoenix --from=BUILD /phoenixd/build/distributions/phoenix-*-jvm.tar .
 RUN tar --strip-components=1 -xvf phoenix-*-jvm.tar
 
 # Indicate that the container listens on port 9740

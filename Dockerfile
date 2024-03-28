@@ -30,6 +30,7 @@ RUN apk add --update --no-cache bash
 # Create a phoenix group and user
 RUN addgroup -S phoenix -g 1000 \
     && adduser -S phoenix -G phoenix -u 1000 -h /phoenix \
+    && mkdir -p /phoenix/.phoenix \
     && chown -R phoenix:phoenix /phoenix
 USER phoenix:phoenix
 

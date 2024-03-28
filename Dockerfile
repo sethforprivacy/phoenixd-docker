@@ -30,8 +30,6 @@ RUN apk add --update --no-cache bash
 # Create a phoenix group and user
 RUN addgroup -S phoenix -g 1000 \
     && adduser -S phoenix -G phoenix -u 1000 -h /phoenix \
-    && mkdir -p /phoenix/.phoenix \
-    && chown -R phoenix:phoenix /phoenix
 USER phoenix:phoenix
 
 # Unpack the release
@@ -43,7 +41,7 @@ RUN tar --strip-components=1 -xvf phoenix-*-jvm.tar
 EXPOSE 9740
 
 # Expose default data directory as VOLUME
-VOLUME [ "/phoenix/.phoenix" ]
+VOLUME [ "/phoenix" ]
 
 # Run the daemon with necessary flags for a detacted daemon mode
 ENTRYPOINT ["/phoenix/bin/phoenixd", "--agree-to-terms-of-service", "--http-bind-ip", "0.0.0.0"]

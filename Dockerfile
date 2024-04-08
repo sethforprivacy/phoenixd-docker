@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk-jammy AS BUILD
 
 # Set necessary args and environment variables for building phoenixd
 # Including pinning commit hash
-ARG PHOENIXD_BRANCH=master
+ARG PHOENIXD_BRANCH=aarch64-disable-native
 ARG PHOENIXD_COMMIT_HASH=75247e4de22ca5213c5012687975f0ccb25f205e
 
 # Upgrade all packages and install dependencies

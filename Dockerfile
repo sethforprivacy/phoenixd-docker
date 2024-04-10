@@ -1,109 +1,47 @@
-# Much credit for the base of this image goes to @pm47: 
-# https://github.com/ACINQ/phoenixd/issues/1#issuecomment-2016584446
+# Ubuntu image for building, for compatibility with macOS arm64
+FROM eclipse-temurin:21-jdk-jammy AS BUILD
 
-# Create builder image using Ubuntu 18.04
-# Ubuntu 18.04 is a necessarily older version of Ubuntu to support the build process for phoenixd and its dependencies
-FROM ubuntu:18.04 as builder
-
-# Pin phoenixd, lightning-kmp, and libcurl versions
-ARG PHOENIXD_BRANCH=v0.1.3
-ARG PHOENIXD_COMMIT_HASH=d805f81c2bfb8a09a726bb36278216e607100a16
-ARG LIGHTNING_KMP_BRANCH=v1.6.2-FEECREDIT-5
-ARG LIGHTNING_KMP_COMMIT_HASH=cb35855060da6ba105e22d9ed8c0d95478d3985a
-ARG CURL_VERSION=7.88.1
+# Set necessary args and environment variables for building phoenixd
+# Including pinning commit hash
+ARG PHOENIXD_BRANCH=v0.1.4
+ARG PHOENIXD_COMMIT_HASH=04bd430c48b09611ac201d44fe4a25c32aad0a5f
 
 # Upgrade all packages and install dependencies
 RUN apt-get update \
     && apt-get upgrade -y
-RUN apt-get install -y --no-install-recommends \
-        ca-certificates \
-        openjdk-17-jdk \
-        openssh-client \
-        libgnutls28-dev \
-        libsqlite3-dev  \
-        build-essential \
-        git \
-        wget \
+RUN apt-get install -y --no-install-recommends bash git \
     && apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Set necessary args and environment variables for building phoenixd
-ARG PHOENIXD_BRANCH
-ARG PHOENIXD_COMMIT_HASH
-ARG LIGHTNING_KMP_BRANCH
-ARG LIGHTNING_KMP_COMMIT_HASH
-
-# Build dependencies
-WORKDIR /lightning-kmp
-RUN git clone --recursive --branch ${LIGHTNING_KMP_BRANCH} \
-    https://github.com/ACINQ/lightning-kmp . \
-    && test `git rev-parse HEAD` = ${LIGHTNING_KMP_COMMIT_HASH} || exit 1 \
-    && ./gradlew publishToMavenLocal -x dokkaHtml
-
-WORKDIR /curl
-RUN wget https://curl.se/download/curl-${CURL_VERSION}.tar.bz2 \
-    && tar -xjvf curl-${CURL_VERSION}.tar.bz2 \
-    && cd curl-${CURL_VERSION} \
-    && ./configure --with-gnutls=/lib/x86_64-linux-gnu/ \
-    && make \
-    && make install \
-    && ldconfig
-
-# Git pull phoenixd source at specified tag/branch and compile phoenixd binary
+# Git pull phoenixd source at specified tag/branch and compile phoenixd
 WORKDIR /phoenixd
-RUN git clone --recursive --branch ${PHOENIXD_BRANCH} \
+RUN git clone --recursive --single-branch --branch ${PHOENIXD_BRANCH} -c advice.detachedHead=false \
     https://github.com/ACINQ/phoenixd . \
     && test `git rev-parse HEAD` = ${PHOENIXD_COMMIT_HASH} || exit 1 \
-    && ./gradlew packageLinuxX64
+    && ./gradlew distTar
 
-# Begin final image build
-# Select Ubuntu 18.04 for the base image
-# Ubuntu 18.04 is a necessarily older version of Ubuntu to support the build process for phoenixd and its dependencies
-FROM ubuntu:18.04 as final
-
-ARG CURL_VERSION=7.88.1
+# Use Alpine imageas final base image to minimize final image size
+FROM eclipse-temurin:21-jre-alpine as FINAL
 
 # Upgrade all packages and install dependencies
-RUN DEBIAN_FRONTEND=noninteractive apt-get update \
-    && apt-get upgrade -y
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        build-essential \
-        ca-certificates \
-        libgnutls28-dev \
-        libsqlite3-dev  \
-        wget \
-    && apt clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apk update \
+    && apk upgrade --no-interactive
+RUN apk add --update --no-cache bash
 
-# Build and install necessary libcurl dependency, and then cleanup
-WORKDIR /curl
-RUN wget https://curl.se/download/curl-${CURL_VERSION}.tar.bz2 \
-    && tar -xjvf curl-${CURL_VERSION}.tar.bz2 \
-    && cd curl-${CURL_VERSION} \
-    && ./configure --with-gnutls=/lib/x86_64-linux-gnu/ \
-    && make \
-    && make install \
-    && ldconfig \
-    && rm -rf /curl \
-    && DEBIAN_FRONTEND=noninteractive apt purge -y build-essential wget \
-    && apt autoremove -y
-
-# Set phoenix user and group with static IDs
-ARG GROUP_ID=1000
-ARG USER_ID=1000
-RUN groupadd -g ${GROUP_ID} phoenix \
-    && useradd -u ${USER_ID} -g phoenix -d /phoenix phoenix \
-    && mkdir -p /phoenix/.phoenix \
-    && chown -R phoenix:phoenix /phoenix
+# Create a phoenix group and user
+RUN addgroup -S phoenix -g 1000 \
+    && adduser -S phoenix -G phoenix -u 1000 -h /phoenix
 USER phoenix:phoenix
 
-# Switch to home directory and install newly built phoenixd binary
+# Unpack the release
 WORKDIR /phoenix
-COPY --chown=phoenix:phoenix --from=builder /phoenixd/build/bin/linuxX64/phoenixdReleaseExecutable/phoenixd.kexe /usr/local/bin/phoenixd
+COPY --chown=phoenix:phoenix --from=BUILD /phoenixd/build/distributions/phoenix-*-jvm.tar .
+RUN tar --strip-components=1 -xvf phoenix-*-jvm.tar
 
 # Indicate that the container listens on port 9740
 EXPOSE 9740
 
-# Expose default phoenixd storage location
-VOLUME ["/phoenix/.phoenix"]
+# Expose default data directory as VOLUME
+VOLUME [ "/phoenix" ]
 
-# Run the daemon
-ENTRYPOINT ["phoenixd", "--http-bind-ip", "0.0.0.0"]
+# Run the daemon with necessary flags for a detacted daemon mode
+ENTRYPOINT ["/phoenix/bin/phoenixd", "--agree-to-terms-of-service", "--http-bind-ip", "0.0.0.0"]

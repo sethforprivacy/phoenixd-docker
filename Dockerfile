@@ -1,5 +1,5 @@
 # Ubuntu image for building, for compatibility with macOS arm64
-FROM eclipse-temurin:21-jdk-jammy AS BUILD
+FROM eclipse-temurin:21-jdk-jammy AS build
 
 # Set necessary args and environment variables for building phoenixd
 # Including pinning commit hash
@@ -20,7 +20,7 @@ RUN git clone --recursive --single-branch --branch ${PHOENIXD_BRANCH} -c advice.
     && ./gradlew distTar
 
 # Use Alpine imageas final base image to minimize final image size
-FROM eclipse-temurin:21-jre-alpine as FINAL
+FROM eclipse-temurin:21-jre-alpine AS final
 
 # Upgrade all packages and install dependencies
 RUN apk update \

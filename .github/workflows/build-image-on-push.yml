@@ -13,7 +13,7 @@ on:
 
 jobs:
   rebuild-container:
-    name: "Build image with cache"
+    name: "Build image without cache"
     runs-on: ubuntu-latest
     steps:
       - 
@@ -36,7 +36,6 @@ jobs:
           load: true
           platforms: linux/amd64
           tags: phoenixd:test
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/phoenixd:latest
       - 
         name: Test-run x86_64 image
         run: |
@@ -53,4 +52,3 @@ jobs:
           load: true
           platforms: linux/arm64
           tags: phoenixd:test
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/phoenixd:latest

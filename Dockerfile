@@ -3,8 +3,8 @@ FROM eclipse-temurin:21-jdk-jammy AS build
 
 # Set necessary args and environment variables for building phoenixd
 # Including pinning commit hash
-ARG PHOENIXD_BRANCH=v0.3.0
-ARG PHOENIXD_COMMIT_HASH=8e21bcf1731e13d7b0c7e3e62cecd54b0facc557
+ARG PHOENIXD_BRANCH=v0.3.1
+ARG PHOENIXD_COMMIT_HASH=b735020e66daa01512e8fb2f47274b25916b207e
 
 # Upgrade all packages and install dependencies
 RUN apt-get update \

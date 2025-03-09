@@ -1,5 +1,5 @@
 # Ubuntu image for building, for compatibility with macOS arm64
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:22-jdk-jammy AS build
 
 # Set necessary args and environment variables for building phoenixd
 # Including pinning commit hash

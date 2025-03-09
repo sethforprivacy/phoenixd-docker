@@ -20,7 +20,7 @@ RUN git clone --recursive --single-branch --branch ${PHOENIXD_BRANCH} -c advice.
     && ./gradlew distTar
 
 # Use Alpine imageas final base image to minimize final image size
-FROM eclipse-temurin:21-jre-alpine AS final
+FROM eclipse-temurin:23-jre-alpine AS final
 
 # Upgrade all packages and install dependencies
 RUN apk update \

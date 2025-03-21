@@ -19,7 +19,7 @@ WORKDIR /phoenixd
 RUN git clone --recursive --single-branch --branch ${PHOENIXD_BRANCH} -c advice.detachedHead=false \
     https://github.com/ACINQ/phoenixd . \
     && test `git rev-parse HEAD` = ${PHOENIXD_COMMIT_HASH} || exit 1 \
-    && ./gradlew distTar
+    && ./gradlew jvmDistTar
 
 # Use JRE Ubuntu image as final base image temporarily to resolve https://github.com/sethforprivacy/phoenixd-docker/issues/13
 FROM eclipse-temurin:21-jre-jammy AS final
@@ -39,8 +39,8 @@ USER phoenix:phoenix
 
 # Unpack the release
 WORKDIR /phoenix
-COPY --chown=phoenix:phoenix --from=BUILD /phoenixd/build/distributions/phoenix-*-jvm.tar .
-RUN tar --strip-components=1 -xvf phoenix-*-jvm.tar
+COPY --chown=phoenix:phoenix --from=BUILD /phoenixd/build/distributions/phoenixd-*-jvm.tar .
+RUN tar --strip-components=1 -xvf phoenixd-*-jvm.tar
 
 # Indicate that the container listens on port 9740
 EXPOSE 9740

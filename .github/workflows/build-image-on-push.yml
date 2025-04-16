@@ -22,8 +22,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          # Disable Arm builds until https://github.com/ACINQ/phoenixd/pull/157 is merged
-          # - ubuntu-24.04-arm
+          - ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
     steps:
       - name: Prepare platform matrix for arm64
